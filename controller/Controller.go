@@ -2,6 +2,10 @@ package controller
 
 import "net/http"
 
+type Controller struct {
+	*http.ServeMux
+}
+
 type Init interface {
 	RoutesInit()
 	Get(w http.ResponseWriter, req *http.Request)
