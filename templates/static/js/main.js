@@ -14,8 +14,6 @@ const app = Vue.createApp({
         }
     },
     template: '<messages-list :messages="messages"/>',
-
-
 })
 
 app.component('messages-list', {

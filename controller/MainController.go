@@ -2,25 +2,19 @@ package controller
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"socialnetwork/domain"
-	"socialnetwork/domain/DTO"
+	"socialnetwork/service"
 	"strconv"
 )
 
 type Message struct {
-	Serve Controller
-}
-
-var messages = []DTO.Message{
-	DTO.NewMessage(domain.NewMessage(1, "first message")),
-	DTO.NewMessage(domain.NewMessage(2, "second message")),
-	DTO.NewMessage(domain.NewMessage(3, "third message")),
-	DTO.NewMessage(domain.NewMessage(4, "fourth message")),
+	Serve   Controller
+	Service *service.Message
 }
 
 func (c *Message) Get(w http.ResponseWriter, req *http.Request) {
+	messages := c.Service.GetAllMessages()
 
 	messagesJson, err := json.Marshal(messages)
 	if err != nil {
@@ -34,41 +28,37 @@ func (c *Message) Get(w http.ResponseWriter, req *http.Request) {
 
 func (c *Message) Post(w http.ResponseWriter, req *http.Request) {
 
-	newMessage := DTO.Message{}
+	newMessage := domain.Message{}
 
 	err := json.NewDecoder(req.Body).Decode(&newMessage)
 
 	if err != nil {
 		//TODO: log errors.
 	}
-	newMessage.SetId(messages[len(messages)-1].Id + 1)
-
-	message := DTO.NewMessage(&newMessage)
-	messages = append(messages, message)
-	messagesJson, _ := json.Marshal(message)
+	newMessage.Id = 0
+	c.Service.Save(&newMessage)
+	messagesJson, _ := json.Marshal(newMessage)
 	w.Write(messagesJson)
 }
 
 func (c *Message) Put(w http.ResponseWriter, req *http.Request) {
 	value := req.PathValue("id")
-	fmt.Println(value)
+
 	id, err := strconv.ParseInt(value, 10, 64)
 	if err != nil {
 
 	}
-	m := DTO.Message{}
+	m := domain.Message{}
 	errJson := json.NewDecoder(req.Body).Decode(&m)
 	if errJson != nil {
 
 	}
-	fmt.Println(m)
 
-	if id != m.GetId() {
-		m.SetId(id)
+	if id != m.Id {
+		m.Id = id
 	}
 
-	messageFromDb := &messages[id-1]
-	messageFromDb.Text = m.GetMessage()
+	messageFromDb := c.Service.Save(&m)
 	messagesJson, errJsonMarshal := json.Marshal(messageFromDb)
 	if errJsonMarshal != nil {
 
@@ -78,23 +68,16 @@ func (c *Message) Put(w http.ResponseWriter, req *http.Request) {
 
 func (c *Message) Delete(w http.ResponseWriter, req *http.Request) {
 	value := req.PathValue("id")
-	id, err := strconv.ParseInt(value, 10, 64)
-	if err != nil {
-
-	}
-	messages = append(messages[:id-1], messages[id:]...)
+	c.Service.DeleteOneById(value)
+	messages := c.Service.GetAllMessages()
 	messagesJson, _ := json.Marshal(messages)
 	w.Write(messagesJson)
 }
 
 func (c *Message) GetOne(w http.ResponseWriter, req *http.Request) {
 	value := req.PathValue("id")
-	id, err := strconv.ParseInt(value, 10, 64)
-	if err != nil {
-
-	}
-
-	messageJson, errJson := json.Marshal(messages[id-1])
+	messageFromDb := c.Service.FindOneById(value)
+	messageJson, errJson := json.Marshal(messageFromDb)
 	if errJson != nil {
 	}
 	w.Write(messageJson)
