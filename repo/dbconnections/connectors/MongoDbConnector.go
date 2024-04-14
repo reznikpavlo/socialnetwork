@@ -2,10 +2,11 @@ package connectors
 
 import (
 	"context"
-	"fmt"
+	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
+	"os"
 	"strings"
 )
 
@@ -25,7 +26,25 @@ type MongoDbConnector struct {
 	Context           context.Context
 }
 
-func NewMongoDbConnector(source, port, username, password string) *MongoDbConnector {
+func NewMongoDbConnector() *MongoDbConnector {
+	err := godotenv.Load("application.env")
+	if err != nil {
+		log.Println("error oppening env file.")
+	}
+	connector := newMongoDbConnector(os.Getenv("mongo.datasource.url"),
+		os.Getenv("mongo.datasource.port"),
+		os.Getenv("mongo.datasource.username"),
+		os.Getenv("mongo.datasource.password"))
+	return connector
+	/*	connector := newMongoDbConnector("localhost",
+			"27017",
+			"admin",
+			"Qwertyu8")
+		return connector
+	*/
+}
+
+func newMongoDbConnector(source, port, username, password string) *MongoDbConnector {
 	m := MongoDbConnector{
 		source:            source,
 		port:              port,
@@ -40,16 +59,11 @@ func NewMongoDbConnector(source, port, username, password string) *MongoDbConnec
 func (m *MongoDbConnector) BuildUri() {
 	uriBuilder := strings.Builder{}
 	uriBuilder.WriteString("mongodb://")
-	//	uriBuilder.WriteString(m.username)
-	//	uriBuilder.WriteString(":")
-	//	uriBuilder.WriteString(m.password)
-	//	uriBuilder.WriteString("@")
 	uriBuilder.WriteString(m.source)
 	uriBuilder.WriteString(":")
 	uriBuilder.WriteString(m.port)
-	//	uriBuilder.WriteString("/social")
 	m.uri = uriBuilder.String()
-	fmt.Println("uri do db = ", m.uri)
+	//	log.Println("uri do db = ", m.uri)
 }
 
 func (m *MongoDbConnector) ConnectDB() {

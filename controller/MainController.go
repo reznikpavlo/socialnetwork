@@ -6,6 +6,7 @@ import (
 	"socialnetwork/domain"
 	"socialnetwork/service"
 	"strconv"
+	"time"
 )
 
 type Message struct {
@@ -29,7 +30,7 @@ func (c *Message) Get(w http.ResponseWriter, req *http.Request) {
 func (c *Message) Post(w http.ResponseWriter, req *http.Request) {
 
 	newMessage := domain.Message{}
-
+	newMessage.CreationDate = time.Now()
 	err := json.NewDecoder(req.Body).Decode(&newMessage)
 
 	if err != nil {

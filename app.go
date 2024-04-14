@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"socialnetwork/controller"
@@ -8,12 +9,12 @@ import (
 	"socialnetwork/repo/dbconnections/connectors"
 	"socialnetwork/repo/messageRepo"
 	"socialnetwork/service"
+	"socialnetwork/utils"
 )
 
 func main() {
 	messageController := &controller.Message{}
-
-	connector := connectors.NewMongoDbConnector("localhost", "27017", "admin", "Qwertyu8")
+	connector := connectors.NewMongoDbConnector()
 	mrepoMongo := messageRepo.MessageRepoMongo{
 		&dbconnections.Db{MongoDB: connector},
 	}
@@ -21,16 +22,26 @@ func main() {
 		Repo: &mrepoMongo,
 	}
 	messageController.RoutesInit()
-
+	loginController := &controller.LoginController{}
+	loginController.Init()
 	mux := http.NewServeMux()
 	mux.Handle("/message/", messageController.Serve.ServeMux)
+	mux.Handle("/google/", loginController.Serve.ServeMux)
 	mux.Handle("/", http.FileServer(http.Dir("./templates/static")))
+	uri := utils.NewServerAddress()
+	server := &http.Server{Addr: uri, Handler: mux}
+	log.Println("Server running on ", uri)
 
-	log.Println("Server running on: localhost:8080")
-	server := &http.Server{Addr: ":8080", Handler: mux}
-	server.ListenAndServe()
-
+	err := server.ListenAndServe()
+	log.Println(err)
+	checkErr(err)
 	defer server.Close()
 	defer connector.Disconn()
 
+}
+
+func checkErr(err error) {
+	if err != nil {
+		fmt.Println(err)
+	}
 }
