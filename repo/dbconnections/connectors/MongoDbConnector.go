@@ -23,6 +23,7 @@ type MongoDbConnector struct {
 	uri               string
 	client            *mongo.Client
 	MessageCollection *mongo.Collection
+	UserCollection    *mongo.Collection
 	Context           context.Context
 }
 
@@ -52,6 +53,8 @@ func newMongoDbConnector(source, port, username, password string) *MongoDbConnec
 		password:          password,
 		uri:               "",
 		MessageCollection: nil,
+		UserCollection:    nil,
+		Context:           context.TODO(),
 	}
 	m.BuildUri()
 	return &m
@@ -73,7 +76,7 @@ func (m *MongoDbConnector) ConnectDB() {
 	credential := options.Credential{Username: m.username, Password: m.password}
 	clientOptions := options.Client()
 	clientOptions.ApplyURI(m.uri).SetAuth(credential)
-	client, err1 := mongo.Connect(context.Background(), clientOptions)
+	client, err1 := mongo.Connect(context.TODO(), clientOptions)
 	err2 := client.Ping(m.Context, nil)
 	log.Println("Connected to mongodb")
 	if err2 != nil {
@@ -83,6 +86,7 @@ func (m *MongoDbConnector) ConnectDB() {
 		panic(err1)
 	}
 	m.MessageCollection = client.Database("social").Collection("messages")
+	m.UserCollection = client.Database("social").Collection("usr")
 	m.client = client
 
 }

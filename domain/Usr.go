@@ -11,6 +11,7 @@ type Usr struct {
 	Name      string    `json:"name"`
 	Locale    string    `json:"locale"`
 	LastVisit time.Time `json:"lastVisit"`
+	IsActive  bool      `json:"isActive"`
 }
 
 func (u Usr) String() string {

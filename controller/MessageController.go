@@ -12,6 +12,7 @@ import (
 type Message struct {
 	Serve   Controller
 	Service *service.Message
+	Session *service.SessionService
 }
 
 func (c *Message) Get(w http.ResponseWriter, req *http.Request) {

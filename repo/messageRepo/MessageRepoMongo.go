@@ -26,7 +26,7 @@ func (m *MessageRepoMongo) FindById(id int64) domain.Message {
 }
 
 func (m *MessageRepoMongo) FindAll() []domain.Message {
-	return m.FindTop(0)
+	return m.FindTop(100)
 }
 
 func (m *MessageRepoMongo) FindTop(top int64) []domain.Message {
