@@ -1,9 +1,8 @@
 package userRepo
 
 import (
-	"context"
+	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
 	"socialnetwork/domain"
 	"socialnetwork/repo/dbconnections"
@@ -26,22 +25,46 @@ func (r *UserRepo) FindById(id string) *domain.Usr {
 
 func (r *UserRepo) SaveUser(u *domain.Usr) *domain.Usr {
 	id := u.Id
-	fter := bson.M{"id": id}
+	ff := bson.D{{"id", id}}
 	userFromDb := domain.Usr{}
-	opt := options.FindOne()
-	result := r.MongoDB.UserCollection.FindOne(context.TODO(), fter, opt)
-	if result != nil {
-		result.Decode(&userFromDb)
-		r.DeleteONe(&userFromDb)
+	// Check if MongoDB collection is nil
+	if r.MongoDB == nil {
+		// Handle error
+		fmt.Println("MongoDB connection is nil")
+		return nil
 	}
-	/*if err == nil {
-		r.DeleteONe(&userFromDb)
-	}*/
-	r.MongoDB.UserCollection.InsertOne(r.MongoDB.Context, u)
+
+	if r.MongoDB.UserCollection == nil {
+		fmt.Println("MongoDB UserCollection is nil")
+		return nil
+	}
+
+	// Query MongoDB collection
+	result := r.MongoDB.UserCollection.FindOne(r.MongoDB.Context, ff)
+	if result != nil {
+		// Decode result into userFromDb
+		err := result.Decode(&userFromDb)
+		if err != nil {
+			// Handle decode error
+			fmt.Println("Error decoding result:", err)
+		}
+		// Delete existing user
+		r.DeleteOne(&userFromDb)
+
+	}
+
+	// Insert new user
+	_, err := r.MongoDB.UserCollection.InsertOne(r.MongoDB.Context, u)
+	if err != nil {
+		// Handle insert error
+		fmt.Println("Error inserting user:", err)
+		return nil
+	}
+
 	return r.FindById(u.Id)
 }
 
-func (r *UserRepo) DeleteONe(u *domain.Usr) {
+func (r *UserRepo) DeleteOne(u *domain.Usr) {
 	usrBson, err := bson.Marshal(u)
 	checkErr(err)
 	r.MongoDB.UserCollection.DeleteOne(r.MongoDB.Context, usrBson)

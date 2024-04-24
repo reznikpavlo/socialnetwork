@@ -31,7 +31,6 @@ func (m *MessageRepoMongo) FindAll() []domain.Message {
 
 func (m *MessageRepoMongo) FindTop(top int64) []domain.Message {
 	var resultMessages []domain.Message
-	m.MongoDB.ConnectDB()
 	findOptions := options.Find()
 	if top != 0 {
 		findOptions = options.Find().SetLimit(top)

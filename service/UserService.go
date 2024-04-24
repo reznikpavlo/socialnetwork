@@ -41,7 +41,9 @@ func (service *UserService) Login(u *domain.Usr) *domain.Usr {
 	service.repo.SaveUser(u)
 	return u
 }
-
+func (us *UserService) DeleteSession(id string) {
+	us.session.DeleteById(id)
+}
 func (s *UserService) DeleteUser(u *domain.Usr) {
 	usr := s.repo.FindById(u.Id)
 	usr.IsActive = false
@@ -49,5 +51,5 @@ func (s *UserService) DeleteUser(u *domain.Usr) {
 	if ok {
 		s.session.DeleteById(u.Id)
 	}
-	s.repo.DeleteONe(u)
+	s.repo.DeleteOne(u)
 }

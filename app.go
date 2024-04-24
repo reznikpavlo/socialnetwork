@@ -26,7 +26,7 @@ func main() {
 	mrepoMongo := messageRepo.MessageRepoMongo{
 		&dbconnections.Db{MongoDB: connector},
 	}
-
+	mrepoMongo.MongoDB.ConnectDB()
 	//message controller init
 	messageController := &controller.Message{}
 	messageController.Service = &service.Message{
@@ -42,9 +42,14 @@ func main() {
 	loginController := &controller.LoginController{}
 	loginController.Init(userService)
 
+	//logout initializing
+	logoutController := &controller.LogoutController{}
+	logoutController.Init(userService)
+
 	mux := http.NewServeMux()
 	mux.Handle("/message/", messageController.Serve.ServeMux)
 	mux.Handle("/google/", loginController.Serve.ServeMux)
+	mux.Handle("/logout", logoutController.Serve.ServeMux)
 	mux.Handle("/", http.FileServer(http.Dir("./templates/static/")))
 
 	uri := utils.NewServerAddress()

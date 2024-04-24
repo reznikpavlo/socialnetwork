@@ -76,7 +76,8 @@ func (m *MongoDbConnector) ConnectDB() {
 	credential := options.Credential{Username: m.username, Password: m.password}
 	clientOptions := options.Client()
 	clientOptions.ApplyURI(m.uri).SetAuth(credential)
-	client, err1 := mongo.Connect(context.TODO(), clientOptions)
+	m.Context = context.TODO()
+	client, err1 := mongo.Connect(m.Context, clientOptions)
 	err2 := client.Ping(m.Context, nil)
 	log.Println("Connected to mongodb")
 	if err2 != nil {
@@ -86,6 +87,7 @@ func (m *MongoDbConnector) ConnectDB() {
 		panic(err1)
 	}
 	m.MessageCollection = client.Database("social").Collection("messages")
+
 	m.UserCollection = client.Database("social").Collection("usr")
 	m.client = client
 

@@ -20,16 +20,20 @@ type LoginController struct {
 func (l *LoginController) Login(w http.ResponseWriter, req *http.Request) {
 	fmt.Println("login")
 	cookie, err := req.Cookie("sessionid")
-	if err == nil {
+	if err == nil && cookie.Value != "" {
 		sessionId := cookie.Value
 		l.userService.CheckSession(sessionId)
+		cookie.Path = "/"
+		cookie.Secure = true
+		cookie.MaxAge = 3600
+		http.SetCookie(w, cookie)
 		http.Redirect(w, req, "/", http.StatusFound)
 	}
 	/*randomBytes := make([]byte, 32)
 	_,err := rand.Read(randomBytes)
 	checkerr(err)*/
 	url := l.auth.Google.AuthCodeURL("")
-	http.Redirect(w, req, url, http.StatusTemporaryRedirect)
+	http.Redirect(w, req, url, http.StatusFound)
 }
 
 func (l *LoginController) Callback(w http.ResponseWriter, req *http.Request) {
@@ -39,15 +43,23 @@ func (l *LoginController) Callback(w http.ResponseWriter, req *http.Request) {
 	client := l.auth.Google.Client(context.TODO(), token)
 	resp, errGet := client.Get("https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken)
 	checkerr(errGet)
-	defer resp.Body.Close()
+	//defer resp.Body.Close()
 	var user domain.Usr
 	errJsonUser := json.NewDecoder(resp.Body).Decode(&user)
 	checkerr(errJsonUser)
 	l.userService.Login(&user)
-	cookie := http.Cookie{
-		Name:  "sessionid",
-		Value: user.Id,
+	_, err = req.Cookie("sessionid")
+	var cookie http.Cookie
+	if err != nil {
+		log.Println("err ", err)
+		cookie = http.Cookie{Name: "sessionid", Value: user.Id}
+	} else {
+		cookie.Value = user.Id
 	}
+
+	cookie.Path = "/"
+	cookie.Secure = true
+	cookie.MaxAge = 3600
 
 	http.SetCookie(w, &cookie)
 	http.Redirect(w, req, "/", http.StatusFound)
